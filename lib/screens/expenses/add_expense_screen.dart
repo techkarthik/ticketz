@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
+import '../../widgets/gradient_background.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -135,57 +136,88 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Expense')),
-      body: Padding(
+    const inputDecor = InputDecoration(
+      labelStyle: TextStyle(color: Colors.white70),
+      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+      border: OutlineInputBorder(),
+    );
+    const textStyle = TextStyle(color: Colors.white);
+
+    return GradientBackground(
+      appBar: AppBar(
+        title: const Text('Add Expense'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
+      ),
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              DropdownButtonFormField<String>(
-                value: _selectedTypeId,
-                decoration: const InputDecoration(labelText: 'Expense Type'),
-                items: _expenseTypes.map((t) {
-                  return DropdownMenuItem(
-                    value: t['id'].toString(),
-                    child: Text(t['type']),
-                  );
-                }).toList(),
-                onChanged: (val) => setState(() => _selectedTypeId = val),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _amountController,
-                decoration: const InputDecoration(labelText: 'Amount'),
-                keyboardType: TextInputType.number,
-                validator: (val) {
-                  if (val == null || val.isEmpty) return 'Required';
-                  if (int.tryParse(val) == null) return 'Invalid number';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                validator: (val) => val!.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: Text('Date: ${_selectedDate.toIso8601String().split('T')[0]}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _pickDate,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitExpense,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('SUBMIT'),
+                child: Column(
+                  children: [
+                     DropdownButtonFormField<String>(
+                      value: _selectedTypeId,
+                      dropdownColor: const Color(0xFF2C5364), // Dark background for dropdown menu
+                      style: textStyle,
+                      decoration: inputDecor.copyWith(labelText: 'Expense Type'),
+                      items: _expenseTypes.map((t) {
+                        return DropdownMenuItem(
+                          value: t['id'].toString(),
+                          child: Text(t['type']),
+                        );
+                      }).toList(),
+                      onChanged: (val) => setState(() => _selectedTypeId = val),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _amountController,
+                      decoration: inputDecor.copyWith(labelText: 'Amount'),
+                      style: textStyle,
+                      keyboardType: TextInputType.number,
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Required';
+                        if (int.tryParse(val) == null) return 'Invalid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: inputDecor.copyWith(labelText: 'Description'),
+                      style: textStyle,
+                      validator: (val) => val!.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('Date: ${_selectedDate.toIso8601String().split('T')[0]}', style: textStyle),
+                      trailing: const Icon(Icons.calendar_today, color: Colors.white),
+                      onTap: _pickDate,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _submitExpense,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: const Color(0xFF2ECC71), // Emerald
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('SUBMIT'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

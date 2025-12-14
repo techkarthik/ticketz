@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
+import '../../widgets/gradient_background.dart';
 
 class DepartmentsScreen extends StatefulWidget {
   const DepartmentsScreen({super.key});
@@ -118,41 +119,51 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientBackground(
       appBar: AppBar(
         title: const Text('Manage Departments'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showDepartmentDialog(),
+        backgroundColor: Colors.indigoAccent,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: _departments.length,
               itemBuilder: (context, index) {
                 final dept = _departments[index];
-                return ListTile(
-                  leading: const Icon(Icons.business),
-                  title: Text(dept['name']),
-                  subtitle: Text('Active: ${dept['active']}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showDepartmentDialog(dept),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteDepartment(dept['id']),
-                      ),
-                    ],
+                return Card(
+                  color: Colors.white.withOpacity(0.1), // Glassmorphism
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: const Icon(Icons.business, color: Colors.white),
+                    title: Text(dept['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    subtitle: Text('Active: ${dept['active']}', style: const TextStyle(color: Colors.white70)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () => _showDepartmentDialog(dept),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => _deleteDepartment(dept['id']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showDepartmentDialog(),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

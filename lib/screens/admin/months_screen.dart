@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
+import '../../widgets/gradient_background.dart';
 
 class MonthsScreen extends StatefulWidget {
   const MonthsScreen({super.key});
@@ -99,40 +100,50 @@ class _MonthsScreenState extends State<MonthsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientBackground(
       appBar: AppBar(
         title: const Text('Manage Months'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showMonthDialog(),
+        backgroundColor: Colors.indigoAccent,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: _months.length,
               itemBuilder: (context, index) {
                 final month = _months[index];
-                return ListTile(
-                  leading: const Icon(Icons.calendar_month),
-                  title: Text(month['name']),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showMonthDialog(month),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteMonth(month['id']),
-                      ),
-                    ],
+                return Card(
+                  color: Colors.white.withOpacity(0.1),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: const Icon(Icons.calendar_month, color: Colors.white),
+                    title: Text(month['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () => _showMonthDialog(month),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => _deleteMonth(month['id']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showMonthDialog(),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

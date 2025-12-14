@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
+import '../../widgets/gradient_background.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
@@ -148,41 +149,54 @@ class _UsersScreenState extends State<UsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientBackground(
       appBar: AppBar(
         title: const Text('Manage Users'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent, // Transparent for gradient
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showUserDialog(),
+        backgroundColor: Colors.indigoAccent,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: _users.length,
               itemBuilder: (context, index) {
                 final user = _users[index];
-                return ListTile(
-                  leading: CircleAvatar(child: Text(user['username'][0])),
-                  title: Text(user['username']),
-                  subtitle: Text('${user['email']} (Dept: ${user['deptId']})'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showUserDialog(user),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteUser(user['id']),
-                      ),
-                    ],
+                return Card(
+                  color: Colors.white.withOpacity(0.1), // Glassmorphism
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      child: Text(user['username'][0], style: const TextStyle(color: Colors.white)),
+                    ),
+                    title: Text(user['username'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    subtitle: Text('${user['email']} • ${user['deptName']}', style: const TextStyle(color: Colors.white70)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () => _showUserDialog(user),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => _deleteUser(user['id']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showUserDialog(),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

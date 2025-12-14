@@ -1,3 +1,20 @@
+Set-up ImageKit ID
+ImageKit ID is an alphanumeric identifier that uniquely identifies your account and assets. No special characters allowed.
+
+19agqroel
+The chosen ImageKit ID will be used in asset URLs:
+
+https://ik.imagekit.io/19agqroel/path/to/myimage.jpg
+
+Select your data processing and storage region
+The processing region is crucial as it determines where your media files are stored and processed. Choose your processing region based on integration strategy, compliance needs, and audience location.
+
+region Sydney 
+
+image endpoint https://ik.imagekit.io/19agqroel/
+
+
+
 libsql://tickets-techkarthik.aws-ap-south-1.turso.io
 https://tickets-techkarthik.aws-ap-south-1.turso.io/v2/pipeline
 

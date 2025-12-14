@@ -23,7 +23,7 @@ class TursoService {
             {
               "type": "execute",
               "stmt": {
-                "sql": "SELECT * FROM USERS WHERE LOWER(USERNAME) = LOWER(?) AND PASSWORD = ?",
+                "sql": "SELECT U.USERID, U.USERNAME, U.PASSWORD, U.EMAIL, U.MOBILE, U.DEPARTMENTID, D.DEPARTMENT_NAME FROM USERS U LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID WHERE LOWER(U.USERNAME) = LOWER(?) AND U.PASSWORD = ?",
                 "args": [
                   {"type": "text", "value": username},
                   {"type": "text", "value": hashedPassword}
@@ -51,6 +51,7 @@ class TursoService {
                 'email': row[3]['value'],
                 'mobile': row[4]['value'],
                 'deptId': int.parse(row[5]['value']),
+                'deptName': row[6]['value'] ?? 'Unknown',
               };
             }
           }
@@ -68,7 +69,7 @@ class TursoService {
 
   Future<List<Map<String, dynamic>>> getUsers() async {
     try {
-      final res = await _execute("SELECT * FROM USERS");
+      final res = await _execute("SELECT U.USERID, U.USERNAME, U.PASSWORD, U.EMAIL, U.MOBILE, U.DEPARTMENTID, D.DEPARTMENT_NAME FROM USERS U LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID");
       if (res['type'] == 'ok') {
         final rows = res['response']['result']['rows'];
         if (rows != null) {
@@ -79,6 +80,7 @@ class TursoService {
             'email': r[3]['value'],
             'mobile': r[4]['value'],
             'deptId': int.parse(r[5]['value']),
+            'deptName': r[6]['value'] ?? 'Unknown',
           }).toList();
         }
       }
@@ -352,7 +354,7 @@ class TursoService {
 
   Future<List<Map<String, dynamic>>> getExpenseLimits() async {
     try {
-      final res = await _execute("SELECT * FROM EXPENSE_LIMITS");
+      final res = await _execute("SELECT L.ID, L.DEPARTMENTID, L.MONTHNAME, L.LIMIT_AMOUNT, D.DEPARTMENT_NAME FROM EXPENSE_LIMITS L LEFT JOIN DEPARTMENTS D ON L.DEPARTMENTID = D.DEPTID");
       if (res['type'] == 'ok') {
         final rows = res['response']['result']['rows'];
         if (rows != null) {
@@ -361,6 +363,7 @@ class TursoService {
             'deptId': int.parse(r[1]['value']),
             'month': r[2]['value'],
             'limit': int.parse(r[3]['value']),
+            'deptName': r[4]['value'] ?? 'Unknown',
           }).toList();
         }
       }
@@ -370,7 +373,7 @@ class TursoService {
     return [];
   }
 
-  Future<bool> createExpenseLimit(int deptId, String month, int limit) async {
+  Future<String?> createExpenseLimit(int deptId, String month, int limit) async {
     try {
       final res = await _execute(
         "INSERT INTO EXPENSE_LIMITS (DEPARTMENTID, MONTHNAME, LIMIT_AMOUNT) VALUES (?, ?, ?)",
@@ -380,14 +383,23 @@ class TursoService {
           {"type": "integer", "value": limit.toString()},
         ]
       );
-      return res['type'] == 'ok';
+      if (res['type'] == 'error') {
+         if (res['error'].toString().contains("UNIQUE constraint failed")) {
+           return "Limit already exists for this Department and Month.";
+         }
+         return "Database error: ${res['error']}";
+      }
+      return null; // Success
     } catch (e) {
       print('Error creating expense limit: $e');
-      return false;
+      if (e.toString().contains("UNIQUE constraint failed")) {
+           return "Limit already exists for this Department and Month.";
+      }
+      return "Error: $e";
     }
   }
 
-  Future<bool> updateExpenseLimit(int id, int deptId, String month, int limit) async {
+  Future<String?> updateExpenseLimit(int id, int deptId, String month, int limit) async {
     try {
       final res = await _execute(
         "UPDATE EXPENSE_LIMITS SET DEPARTMENTID = ?, MONTHNAME = ?, LIMIT_AMOUNT = ? WHERE ID = ?",
@@ -398,10 +410,19 @@ class TursoService {
           {"type": "integer", "value": id.toString()},
         ]
       );
-      return res['type'] == 'ok';
+      if (res['type'] == 'error') {
+          if (res['error'].toString().contains("UNIQUE constraint failed")) {
+           return "Limit already exists for this Department and Month.";
+         }
+         return "Database error: ${res['error']}";
+      }
+      return null; // Success
     } catch (e) {
       print('Error updating expense limit: $e');
-      return false;
+      if (e.toString().contains("UNIQUE constraint failed")) {
+           return "Limit already exists for this Department and Month.";
+      }
+      return "Error: $e";
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
+import '../../widgets/gradient_background.dart';
 
 class ExpenseTypesScreen extends StatefulWidget {
   const ExpenseTypesScreen({super.key});
@@ -99,40 +100,50 @@ class _ExpenseTypesScreenState extends State<ExpenseTypesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientBackground(
       appBar: AppBar(
         title: const Text('Expense Types'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showTypeDialog(),
+        backgroundColor: Colors.indigoAccent,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: _expenseTypes.length,
               itemBuilder: (context, index) {
                 final type = _expenseTypes[index];
-                return ListTile(
-                  leading: const Icon(Icons.category),
-                  title: Text(type['type']),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showTypeDialog(type),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteType(type['id']),
-                      ),
-                    ],
+                return Card(
+                  color: Colors.white.withOpacity(0.1),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: const Icon(Icons.category, color: Colors.white),
+                    title: Text(type['type'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                          onPressed: () => _showTypeDialog(type),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => _deleteType(type['id']),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showTypeDialog(),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

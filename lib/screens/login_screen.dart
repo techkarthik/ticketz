@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../services/turso_service.dart';
 import 'dashboard_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _tursoService = TursoService();
   bool _isLoading = false;
+  bool _rememberMe = false;
   String? _errorMessage;
 
   Future<void> _handleLogin() async {
@@ -33,6 +36,11 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (user != null) {
+      if (_rememberMe) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_session', jsonEncode(user));
+      }
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => DashboardScreen(user: user)),
@@ -183,7 +191,29 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Theme(
+                                data: ThemeData(unselectedWidgetColor: Colors.white70),
+                                child: Checkbox(
+                                  value: _rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rememberMe = value ?? false;
+                                    });
+                                  },
+                                  activeColor: Colors.white,
+                                  checkColor: const Color(0xFF2575FC),
+                                ),
+                              ),
+                              const Text(
+                                'Keep me logged in',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
                             height: 50,

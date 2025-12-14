@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
+import '../../widgets/gradient_background.dart';
 
 class MyExpensesScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -39,32 +40,49 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('My Expenses')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+    return GradientBackground(
+      appBar: AppBar(
+        title: const Text('My Expenses'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+            // Refresh on return
+             _loadExpenses();
+        },
+        backgroundColor: Colors.indigoAccent,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.refresh), 
+      ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _expenses.isEmpty 
-              ? const Center(child: Text('No expenses found.'))
+              ? const Center(child: Text('No expenses found.', style: TextStyle(color: Colors.white)))
               : ListView.builder(
+                  padding: const EdgeInsets.all(16),
                   itemCount: _expenses.length,
                   itemBuilder: (context, index) {
                     final expense = _expenses[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      color: Colors.white.withOpacity(0.1),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                          child: const Icon(Icons.receipt_long),
+                          backgroundColor: Colors.white.withOpacity(0.2),
+                          child: const Icon(Icons.receipt_long, color: Colors.white),
                         ),
-                        title: Text(expense['description']),
-                        subtitle: Text('${expense['date']}'),
+                        title: Text(expense['description'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        subtitle: Text('${expense['date']}', style: const TextStyle(color: Colors.white70)),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
                               '\$${expense['amount']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                             ),
                             Text(
                               expense['status'],
@@ -80,13 +98,6 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-            // Refresh on return
-             _loadExpenses();
-        },
-        child: const Icon(Icons.refresh), // Just refresh for now, add logic handled in dashboard
-      ),
     );
   }
 }
