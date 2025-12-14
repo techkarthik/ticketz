@@ -12,19 +12,22 @@ class UsersScreen extends StatefulWidget {
 class _UsersScreenState extends State<UsersScreen> {
   final _tursoService = TursoService();
   List<Map<String, dynamic>> _users = [];
+  List<Map<String, dynamic>> _departments = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUsers();
+    _loadData();
   }
 
-  Future<void> _loadUsers() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
     final users = await _tursoService.getUsers();
+    final departments = await _tursoService.getDepartments();
     setState(() {
       _users = users;
+      _departments = departments;
       _isLoading = false;
     });
   }
@@ -34,89 +37,138 @@ class _UsersScreenState extends State<UsersScreen> {
     final usernameController = TextEditingController(text: user?['username']);
     final emailController = TextEditingController(text: user?['email']);
     final mobileController = TextEditingController(text: user?['mobile']);
-    final deptIdController = TextEditingController(text: user?['deptId']?.toString());
     final passwordController = TextEditingController();
+    
+    // Default to first department if adding, or existing deptId if editing
+    int? selectedDeptId = user?['deptId'];
+    if (selectedDeptId == null && _departments.isNotEmpty) {
+      selectedDeptId = _departments.first['id'];
+    }
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isEditing ? 'Edit User' : 'Add User'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E2A38), // Dark background
+            title: Text(
+              isEditing ? 'Edit User' : 'Add User',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTextField(usernameController, 'Username'),
+                  const SizedBox(height: 10),
+                  _buildTextField(passwordController, isEditing ? 'New Password (optional)' : 'Password', obscureText: true),
+                  const SizedBox(height: 10),
+                  _buildTextField(emailController, 'Email', keyboardType: TextInputType.emailAddress),
+                  const SizedBox(height: 10),
+                  _buildTextField(mobileController, 'Mobile', keyboardType: TextInputType.phone),
+                  const SizedBox(height: 10),
+                  // Department Dropdown
+                  DropdownButtonFormField<int>(
+                    value: selectedDeptId,
+                    dropdownColor: const Color(0xFF2C3E50),
+                    decoration: InputDecoration(
+                      labelText: 'Department',
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white30),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    items: _departments.map((dept) {
+                      return DropdownMenuItem<int>(
+                        value: dept['id'],
+                        child: Text(dept['name']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() => selectedDeptId = value);
+                    },
+                  ),
+                ],
               ),
-              TextField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: isEditing ? 'New Password (optional)' : 'Password',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
                 ),
-                obscureText: true,
-              ),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              TextField(
-                controller: mobileController,
-                decoration: const InputDecoration(labelText: 'Mobile'),
-              ),
-              TextField(
-                controller: deptIdController,
-                decoration: const InputDecoration(labelText: 'Department ID'),
-                keyboardType: TextInputType.number,
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final username = usernameController.text;
+                  final password = passwordController.text;
+                  final email = emailController.text;
+                  final mobile = mobileController.text;
+
+                  if (username.isEmpty) return;
+                  if (!isEditing && password.isEmpty) return; // Password required for new
+                  if (selectedDeptId == null) return;
+
+                  bool success;
+                  if (isEditing) {
+                    success = await _tursoService.updateUser(
+                      user['id'],
+                      username,
+                      password.isEmpty ? null : password,
+                      email,
+                      mobile,
+                      selectedDeptId!,
+                    );
+                  } else {
+                    success = await _tursoService.createUser(
+                      username,
+                      password,
+                      email,
+                      mobile,
+                      selectedDeptId!,
+                    );
+                  }
+
+                  if (success) {
+                    if (mounted) _loadData();
+                    navigator.pop();
+                  }
+                },
+                child: Text(isEditing ? 'Update' : 'Create'),
               ),
             ],
-          ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, {bool obscureText = false, TextInputType? keyboardType}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.white30),
+          borderRadius: BorderRadius.circular(8),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final navigator = Navigator.of(context);
-              final username = usernameController.text;
-              final password = passwordController.text;
-              final email = emailController.text;
-              final mobile = mobileController.text;
-              final deptId = int.tryParse(deptIdController.text) ?? 5; // Default to Admin
-
-              if (username.isEmpty) return;
-              if (!isEditing && password.isEmpty) return; // Password required for new
-
-              bool success;
-              if (isEditing) {
-                success = await _tursoService.updateUser(
-                  user['id'],
-                  username,
-                  password.isEmpty ? null : password,
-                  email,
-                  mobile,
-                  deptId,
-                );
-              } else {
-                success = await _tursoService.createUser(
-                  username,
-                  password,
-                  email,
-                  mobile,
-                  deptId,
-                );
-              }
-
-              if (success) {
-                if (mounted) _loadUsers();
-                navigator.pop();
-              }
-            },
-            child: Text(isEditing ? 'Update' : 'Create'),
-          ),
-        ],
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.white),
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
     );
   }
@@ -125,12 +177,13 @@ class _UsersScreenState extends State<UsersScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this user?'),
+        backgroundColor: const Color(0xFF1E2A38),
+        title: const Text('Confirm Delete', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to delete this user?', style: TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -143,7 +196,7 @@ class _UsersScreenState extends State<UsersScreen> {
 
     if (confirmed == true) {
       await _tursoService.deleteUser(id);
-      _loadUsers();
+      _loadData();
     }
   }
 
@@ -176,7 +229,7 @@ class _UsersScreenState extends State<UsersScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.white.withOpacity(0.2),
-                      child: Text(user['username'][0], style: const TextStyle(color: Colors.white)),
+                      child: Text(user['username'][0].toUpperCase(), style: const TextStyle(color: Colors.white)),
                     ),
                     title: Text(user['username'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     subtitle: Text('${user['email']} • ${user['deptName']}', style: const TextStyle(color: Colors.white70)),
