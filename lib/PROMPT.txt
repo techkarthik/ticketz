@@ -1,0 +1,79 @@
+libsql://tickets-techkarthik.aws-ap-south-1.turso.io
+https://tickets-techkarthik.aws-ap-south-1.turso.io/v2/pipeline
+
+eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjU2MTY0MzksImlkIjoiMWVhYTU1ZDktMGQzZS00ZWVlLTlmYjAtNjcwOGI4OGE0ZWFlIiwicmlkIjoiOThhNDIwZjYtNGE0Ny00Y2I1LWIyZWQtM2EwMjYyNjQ4N2E5In0.NQYUbloh5lgkGJnrExit0Jsho-e0b_P6YnaHOFjIXPfXuEgrYJ60ROB6fRZFJyz2PZf3B3yIxDzrh9isYrbkBQ
+static const String _url = "https://tickets-techkarthik.aws-ap-south-1.turso.io/v2/pipeline";
+
+TABLES FORMAT
+
+USERID	USERNAME	PASSWORD	EMAIL			MOBILE		DEPRTMENTID
+1	KARTHIK		123		KARTHIK@EMAIL.COM	9003233312		5
+2	NIRMALA		1234		NIRMALA@EMAIL.COM	8281333771		2
+3	RUDRA		1234		RUDRA@EMAIL.COM		1252565255		1
+
+
+
+DEPTID	DEPARTMENTS	ACTIVE
+1	ACCOUNTS	Y
+2	MARKETING	Y
+3	DEVELOPMENT	Y
+4	WEBSITE		N
+5	ADMIN		Y
+
+ID	TRAVEL
+1	FUEL
+2	SNACKS
+3	INTERNET
+4	RENT
+5	KITCHEN
+
+MONTHS
+
+NAME
+January
+February
+March
+April
+May
+June
+July
+August
+September
+October
+November
+December
+
+
+	EXPENSELIMIT	
+DEPARTMENTID	MONTHNAME	LIMIT
+1		January		2500
+1		February	2500
+1		March		3000
+1		April		2500
+1		May		3500
+1		June		2000
+1		July		4000
+1		August		1500
+1		September	1000
+1		October		500
+1		November	5000
+1		December	4500
+5		January		6000
+5		February	5000
+5		March		4000
+5		April		3500
+5		May		4000
+5		June		3500
+5		July		3500
+5		August		2000
+5		September	500
+5		October		600
+5		November	4200
+5		December	1350
+
+
+TURSO CREDEDNTIAL GIVEN HERE
+
+kindly create the databse as per the given structure for epense project
+
+
