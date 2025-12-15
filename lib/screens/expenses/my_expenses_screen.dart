@@ -81,7 +81,7 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '\$${expense['amount']}',
+                              '₹${expense['amount']}',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                             ),
                             Text(

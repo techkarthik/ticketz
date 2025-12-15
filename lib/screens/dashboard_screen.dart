@@ -60,7 +60,7 @@ class DashboardScreen extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: [
               UserAccountsDrawerHeader(
-                accountName: Text(user['username'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                accountName: Text('${user['username']} (${user['role'] ?? 'USER'})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 accountEmail: Text(user['email'], style: const TextStyle(color: Colors.white70)),
                 currentAccountPicture: CircleAvatar(
                   backgroundColor: Colors.white.withOpacity(0.2),
@@ -74,11 +74,13 @@ class DashboardScreen extends StatelessWidget {
                   border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
                 ),
               ),
-              _buildDrawerItem(context, Icons.people, 'Manage Users', const UsersScreen()),
-              _buildDrawerItem(context, Icons.business, 'Manage Departments', const DepartmentsScreen()),
-              _buildDrawerItem(context, Icons.category, 'Expense Types', const ExpenseTypesScreen()),
-              _buildDrawerItem(context, Icons.calendar_today, 'Months', const MonthsScreen()),
-              _buildDrawerItem(context, Icons.attach_money, 'Expense Limits', const ExpenseLimitsScreen()),
+              if (user['role'] == 'ADMIN') ...[
+                _buildDrawerItem(context, Icons.people, 'Manage Users', const UsersScreen()),
+                _buildDrawerItem(context, Icons.business, 'Manage Departments', const DepartmentsScreen()),
+                _buildDrawerItem(context, Icons.category, 'Expense Types', const ExpenseTypesScreen()),
+                _buildDrawerItem(context, Icons.calendar_today, 'Months', const MonthsScreen()),
+                _buildDrawerItem(context, Icons.currency_rupee, 'Expense Limits', const ExpenseLimitsScreen()),
+              ]
             ],
           ),
         ),

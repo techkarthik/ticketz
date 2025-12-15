@@ -23,7 +23,7 @@ class TursoService {
             {
               "type": "execute",
               "stmt": {
-                "sql": "SELECT U.USERID, U.USERNAME, U.PASSWORD, U.EMAIL, U.MOBILE, U.DEPARTMENTID, D.DEPARTMENT_NAME FROM USERS U LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID WHERE LOWER(U.USERNAME) = LOWER(?) AND U.PASSWORD = ?",
+                "sql": "SELECT U.USERID, U.USERNAME, U.PASSWORD, U.EMAIL, U.MOBILE, U.DEPARTMENTID, D.DEPARTMENT_NAME, U.ROLE FROM USERS U LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID WHERE LOWER(U.USERNAME) = LOWER(?) AND U.PASSWORD = ?",
                 "args": [
                   {"type": "text", "value": username},
                   {"type": "text", "value": hashedPassword}
@@ -52,6 +52,7 @@ class TursoService {
                 'mobile': row[4]['value'],
                 'deptId': int.parse(row[5]['value']),
                 'deptName': row[6]['value'] ?? 'Unknown',
+                'role': row[7]['value'] ?? 'USER',
               };
             }
           }
@@ -69,7 +70,7 @@ class TursoService {
 
   Future<List<Map<String, dynamic>>> getUsers() async {
     try {
-      final res = await _execute("SELECT U.USERID, U.USERNAME, U.PASSWORD, U.EMAIL, U.MOBILE, U.DEPARTMENTID, D.DEPARTMENT_NAME FROM USERS U LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID");
+      final res = await _execute("SELECT U.USERID, U.USERNAME, U.PASSWORD, U.EMAIL, U.MOBILE, U.DEPARTMENTID, D.DEPARTMENT_NAME, U.ROLE FROM USERS U LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID");
       if (res['type'] == 'ok') {
         final rows = res['response']['result']['rows'];
         if (rows != null) {
@@ -81,6 +82,7 @@ class TursoService {
             'mobile': r[4]['value'],
             'deptId': int.parse(r[5]['value']),
             'deptName': r[6]['value'] ?? 'Unknown',
+            'role': r[7]['value'] ?? 'USER',
           }).toList();
         }
       }
@@ -90,19 +92,20 @@ class TursoService {
     return [];
   }
 
-  Future<bool> createUser(String username, String password, String email, String mobile, int deptId) async {
+  Future<bool> createUser(String username, String password, String email, String mobile, int deptId, String role) async {
     try {
       final bytes = utf8.encode(password);
       final hashedPassword = sha256.convert(bytes).toString();
 
       final res = await _execute(
-        "INSERT INTO USERS (USERNAME, PASSWORD, EMAIL, MOBILE, DEPARTMENTID) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO USERS (USERNAME, PASSWORD, EMAIL, MOBILE, DEPARTMENTID, ROLE) VALUES (?, ?, ?, ?, ?, ?)",
         [
           {"type": "text", "value": username},
           {"type": "text", "value": hashedPassword},
           {"type": "text", "value": email},
           {"type": "text", "value": mobile},
           {"type": "integer", "value": deptId.toString()},
+          {"type": "text", "value": role},
         ]
       );
       return res['type'] == 'ok';
@@ -112,7 +115,7 @@ class TursoService {
     }
   }
 
-  Future<bool> updateUser(int id, String username, String? password, String email, String mobile, int deptId) async {
+  Future<bool> updateUser(int id, String username, String? password, String email, String mobile, int deptId, String role) async {
     try {
       String sql;
       List<Map<String, String>> args;
@@ -120,22 +123,24 @@ class TursoService {
       if (password != null && password.isNotEmpty) {
         final bytes = utf8.encode(password);
         final hashedPassword = sha256.convert(bytes).toString();
-        sql = "UPDATE USERS SET USERNAME = ?, PASSWORD = ?, EMAIL = ?, MOBILE = ?, DEPARTMENTID = ? WHERE USERID = ?";
+        sql = "UPDATE USERS SET USERNAME = ?, PASSWORD = ?, EMAIL = ?, MOBILE = ?, DEPARTMENTID = ?, ROLE = ? WHERE USERID = ?";
         args = [
           {"type": "text", "value": username},
           {"type": "text", "value": hashedPassword},
           {"type": "text", "value": email},
           {"type": "text", "value": mobile},
           {"type": "integer", "value": deptId.toString()},
+          {"type": "text", "value": role},
           {"type": "integer", "value": id.toString()},
         ];
       } else {
-        sql = "UPDATE USERS SET USERNAME = ?, EMAIL = ?, MOBILE = ?, DEPARTMENTID = ? WHERE USERID = ?";
+        sql = "UPDATE USERS SET USERNAME = ?, EMAIL = ?, MOBILE = ?, DEPARTMENTID = ?, ROLE = ? WHERE USERID = ?";
         args = [
           {"type": "text", "value": username},
           {"type": "text", "value": email},
           {"type": "text", "value": mobile},
           {"type": "integer", "value": deptId.toString()},
+          {"type": "text", "value": role},
           {"type": "integer", "value": id.toString()},
         ];
       }

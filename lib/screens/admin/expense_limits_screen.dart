@@ -187,9 +187,9 @@ class _ExpenseLimitsScreenState extends State<ExpenseLimitsScreen> {
                   color: Colors.white.withOpacity(0.1),
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    leading: const Icon(Icons.attach_money, color: Colors.white),
+                    leading: const Icon(Icons.currency_rupee, color: Colors.white),
                     title: Text('${limit['month']} • ${limit['deptName']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    subtitle: Text('Limit: ${limit['limit']}', style: const TextStyle(color: Colors.white70)),
+                    subtitle: Text('Limit: ₹${limit['limit']}', style: const TextStyle(color: Colors.white70)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

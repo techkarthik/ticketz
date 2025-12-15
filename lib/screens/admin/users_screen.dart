@@ -45,6 +45,10 @@ class _UsersScreenState extends State<UsersScreen> {
       selectedDeptId = _departments.first['id'];
     }
 
+    // Role
+    String selectedRole = user?['role'] ?? 'USER';
+    final List<String> roles = ['ADMIN', 'USER'];
+
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -94,6 +98,34 @@ class _UsersScreenState extends State<UsersScreen> {
                       setState(() => selectedDeptId = value);
                     },
                   ),
+                  const SizedBox(height: 10),
+                  // Role Dropdown
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    dropdownColor: const Color(0xFF2C3E50),
+                    decoration: InputDecoration(
+                      labelText: 'Role',
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white30),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    items: roles.map((role) {
+                      return DropdownMenuItem<String>(
+                        value: role,
+                        child: Text(role),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) setState(() => selectedRole = value);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -127,6 +159,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       email,
                       mobile,
                       selectedDeptId!,
+                      selectedRole,
                     );
                   } else {
                     success = await _tursoService.createUser(
@@ -135,6 +168,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       email,
                       mobile,
                       selectedDeptId!,
+                      selectedRole,
                     );
                   }
 
@@ -231,7 +265,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       backgroundColor: Colors.white.withOpacity(0.2),
                       child: Text(user['username'][0].toUpperCase(), style: const TextStyle(color: Colors.white)),
                     ),
-                    title: Text(user['username'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    title: Text('${user['username']} (${user['role']})', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     subtitle: Text('${user['email']} • ${user['deptName']}', style: const TextStyle(color: Colors.white70)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,

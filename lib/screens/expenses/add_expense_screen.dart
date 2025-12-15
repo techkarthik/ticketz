@@ -84,7 +84,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Limit Exceeded'),
-          content: Text('This expense of $amount exceeds your department limit of $limit for $monthName.\nCurrent Spending: $currentSpending'),
+          content: Text('This expense of ₹$amount exceeds your department limit of ₹$limit for $monthName.\nCurrent Spending: ₹$currentSpending'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
