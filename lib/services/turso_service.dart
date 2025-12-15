@@ -443,14 +443,85 @@ class TursoService {
     }
   }
 
+  // --- APPROVAL WORKFLOW ---
+
+  Future<List<Map<String, dynamic>>> getPendingExpenses() async {
+    try {
+      final res = await _execute(
+        "SELECT E.ID, E.USERID, E.EXPENSE_TYPE_ID, E.AMOUNT, E.EXPENSE_DATE, E.DESCRIPTION, E.STATUS, U.USERNAME, D.DEPARTMENT_NAME "
+        "FROM EXPENSES E "
+        "LEFT JOIN USERS U ON E.USERID = U.USERID "
+        "LEFT JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID "
+        "WHERE E.STATUS = 'Pending' ORDER BY E.ID DESC"
+      );
+      
+      if (res['type'] == 'ok') {
+         final rows = res['response']['result']['rows'];
+         if (rows != null) {
+           return rows.map<Map<String, dynamic>>((r) => {
+             'id': int.parse(r[0]['value']),
+             'userId': int.parse(r[1]['value']),
+             'typeId': int.parse(r[2]['value']),
+             'amount': int.parse(r[3]['value']),
+             'date': r[4]['value'],
+             'description': r[5]['value'],
+             'status': r[6]['value'],
+             'username': r[7]['value'],
+             'deptName': r[8]['value'] ?? 'Unknown',
+           }).toList();
+         }
+      }
+    } catch (e) {
+      print('Error fetching pending expenses: $e');
+    }
+    return [];
+  }
+
+  Future<bool> approveExpense(int id, int approverId) async {
+    try {
+      final res = await _execute(
+        "UPDATE EXPENSES SET STATUS = 'Approved', APPROVED_BY = ? WHERE ID = ?",
+        [
+          {"type": "integer", "value": approverId.toString()},
+          {"type": "integer", "value": id.toString()},
+        ]
+      );
+      return res['type'] == 'ok';
+    } catch (e) {
+      print('Error approving expense: $e');
+      return false;
+    }
+  }
+
+  Future<bool> rejectExpense(int id, int rejectorId, String remark) async {
+    try {
+      final res = await _execute(
+        "UPDATE EXPENSES SET STATUS = 'Rejected', APPROVED_BY = ?, REJECTION_REMARK = ? WHERE ID = ?",
+        [
+          {"type": "integer", "value": rejectorId.toString()},
+          {"type": "text", "value": remark},
+          {"type": "integer", "value": id.toString()},
+        ]
+      );
+      return res['type'] == 'ok';
+    } catch (e) {
+      print('Error rejecting expense: $e');
+      return false;
+    }
+  }
+
   // --- EXPENSES (USER Submission) ---
 
   Future<List<Map<String, dynamic>>> getUserExpenses(int userId) async {
     try {
-      // Joining with EXPENSE_TYPES to get type name if needed, but let's keep it simple first
-      final res = await _execute("SELECT * FROM EXPENSES WHERE USERID = ? ORDER BY ID DESC", [
-        {"type": "integer", "value": userId.toString()}
-      ]);
+      // Joining with USERS table to get approver name if needed
+      final res = await _execute(
+         "SELECT E.ID, E.USERID, E.EXPENSE_TYPE_ID, E.AMOUNT, E.EXPENSE_DATE, E.DESCRIPTION, E.STATUS, U.USERNAME, E.REJECTION_REMARK "
+         "FROM EXPENSES E "
+         "LEFT JOIN USERS U ON E.APPROVED_BY = U.USERID "
+         "WHERE E.USERID = ? ORDER BY E.ID DESC", 
+         [{"type": "integer", "value": userId.toString()}]
+      );
       if (res['type'] == 'ok') {
         final rows = res['response']['result']['rows'];
         if (rows != null) {
@@ -462,6 +533,8 @@ class TursoService {
             'date': r[4]['value'],
             'description': r[5]['value'],
             'status': r[6]['value'],
+            'approverName': r[7]['value'], 
+            'remark': r[8]['value'],
           }).toList();
         }
       }

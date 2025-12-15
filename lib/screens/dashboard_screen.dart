@@ -7,6 +7,7 @@ import 'expenses/my_expenses_screen.dart';
 import 'admin/expense_limits_screen.dart';
 import 'admin/months_screen.dart';
 import 'admin/users_screen.dart';
+import 'admin/pending_expenses_screen.dart';
 import 'login_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,6 +76,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               if (user['role'] == 'ADMIN') ...[
+                _buildDrawerItem(context, Icons.done_all, 'Pending Approvals', PendingExpensesScreen(currentUser: user)),
                 _buildDrawerItem(context, Icons.people, 'Manage Users', const UsersScreen()),
                 _buildDrawerItem(context, Icons.business, 'Manage Departments', const DepartmentsScreen()),
                 _buildDrawerItem(context, Icons.category, 'Expense Types', const ExpenseTypesScreen()),

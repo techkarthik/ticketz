@@ -75,7 +75,19 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
                           child: const Icon(Icons.receipt_long, color: Colors.white),
                         ),
                         title: Text(expense['description'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        subtitle: Text('${expense['date']}', style: const TextStyle(color: Colors.white70)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${expense['date']}', style: const TextStyle(color: Colors.white70)),
+                            if (expense['status'] == 'Rejected' && expense['remark'] != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Reason: ${expense['remark']}',
+                                style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontStyle: FontStyle.italic),
+                              ),
+                            ],
+                          ],
+                        ),
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
