@@ -9,13 +9,45 @@ import 'admin/months_screen.dart';
 import 'admin/users_screen.dart';
 import 'admin/pending_expenses_screen.dart';
 import 'login_screen.dart';
+import '../services/turso_service.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> user;
 
   const DashboardScreen({super.key, required this.user});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late Future<List<Map<String, dynamic>>> _statsFuture;
+  final _tursoService = TursoService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  void _loadStats() {
+    if (widget.user['role'] == 'ADMIN') {
+      final now = DateTime.now();
+      final monthPrefix = now.toIso8601String().substring(0, 7); // YYYY-MM
+      
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      final monthName = monthNames[now.month - 1];
+
+      _statsFuture = _tursoService.getDepartmentStats(monthPrefix, monthName);
+    } else {
+      _statsFuture = Future.value([]);
+    }
+  }
 
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -61,12 +93,12 @@ class DashboardScreen extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: [
               UserAccountsDrawerHeader(
-                accountName: Text('${user['username']} (${user['role'] ?? 'USER'})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                accountEmail: Text(user['email'], style: const TextStyle(color: Colors.white70)),
+                accountName: Text('${widget.user['username']} (${widget.user['role'] ?? 'USER'})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                accountEmail: Text(widget.user['email'], style: const TextStyle(color: Colors.white70)),
                 currentAccountPicture: CircleAvatar(
                   backgroundColor: Colors.white.withOpacity(0.2),
                   child: Text(
-                    user['username'][0].toUpperCase(),
+                    widget.user['username'][0].toUpperCase(),
                     style: const TextStyle(fontSize: 28.0, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -75,8 +107,8 @@ class DashboardScreen extends StatelessWidget {
                   border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
                 ),
               ),
-              if (user['role'] == 'ADMIN') ...[
-                _buildDrawerItem(context, Icons.done_all, 'Pending Approvals', PendingExpensesScreen(currentUser: user)),
+              if (widget.user['role'] == 'ADMIN') ...[
+                _buildDrawerItem(context, Icons.done_all, 'Pending Approvals', PendingExpensesScreen(currentUser: widget.user)),
                 _buildDrawerItem(context, Icons.people, 'Manage Users', const UsersScreen()),
                 _buildDrawerItem(context, Icons.business, 'Manage Departments', const DepartmentsScreen()),
                 _buildDrawerItem(context, Icons.category, 'Expense Types', const ExpenseTypesScreen()),
@@ -122,7 +154,7 @@ class DashboardScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Welcome, ${user['username']}',
+                          'Welcome, ${widget.user['username']}',
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -138,7 +170,7 @@ class DashboardScreen extends StatelessWidget {
                             border: Border.all(color: Colors.greenAccent.withOpacity(0.5)),
                           ),
                           child: Text(
-                            'Department: ${user['deptName']}',
+                            'Department: ${widget.user['deptName']}',
                             style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -147,7 +179,12 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
+
+              if (widget.user['role'] == 'ADMIN') ...[
+                 _buildStatsCard(),
+                 const SizedBox(height: 30),
+              ],
 
               // Action Buttons Grid
               LayoutBuilder(
@@ -165,8 +202,14 @@ class DashboardScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => AddExpenseScreen(user: user)),
-                          );
+                            MaterialPageRoute(builder: (context) => AddExpenseScreen(user: widget.user)),
+                          ).then((_) {
+                              if (widget.user['role'] == 'ADMIN') {
+                                setState(() {
+                                   _loadStats();
+                                });
+                              }
+                          });
                         },
                       ),
                       _buildActionButton(
@@ -177,7 +220,7 @@ class DashboardScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => MyExpensesScreen(user: user)),
+                            MaterialPageRoute(builder: (context) => MyExpensesScreen(user: widget.user)),
                           );
                         },
                       ),
@@ -191,6 +234,76 @@ class DashboardScreen extends StatelessWidget {
       ),
     ),
   );
+  }
+
+  Widget _buildStatsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           const Text(
+             'Department Expenses (Current Month)',
+             style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+           ),
+           const SizedBox(height: 15),
+           FutureBuilder<List<Map<String, dynamic>>>(
+             future: _statsFuture,
+             builder: (context, snapshot) {
+               if (snapshot.connectionState == ConnectionState.waiting) {
+                 return const Center(child: CircularProgressIndicator(color: Colors.white));
+               }
+               if (snapshot.hasError) {
+                 return Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent));
+               }
+               if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                 return const Text('No approved expenses this month.', style: TextStyle(color: Colors.white70));
+               }
+
+               final stats = snapshot.data!;
+               return ListView.separated(
+                 shrinkWrap: true,
+                 physics: const NeverScrollableScrollPhysics(),
+                 itemCount: stats.length,
+                 separatorBuilder: (_, __) => Divider(color: Colors.white.withOpacity(0.1)),
+                 itemBuilder: (context, index) {
+                   final item = stats[index];
+                   final total = item['total'];
+                   final limit = item['limit'];
+                   
+                   return Row(
+                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                     children: [
+                       Text(item['deptName'], style: const TextStyle(color: Colors.white70, fontSize: 16)),
+                       Row(
+                         children: [
+                            Text(
+                              '₹${total.toStringAsFixed(2)}', 
+                              style: TextStyle(
+                                color: (limit != null && total > limit) ? Colors.redAccent : Colors.white, 
+                                fontSize: 16, 
+                                fontWeight: FontWeight.bold
+                              )
+                            ),
+                            if (limit != null) ...[
+                               Text(' / ₹$limit', style: const TextStyle(color: Colors.white54, fontSize: 14)),
+                            ]
+                         ],
+                       ),
+                     ],
+                   );
+                 },
+               );
+             },
+           )
+        ],
+      ),
+    );
   }
 
   Widget _buildActionButton(BuildContext context, {required IconData icon, required String label, required Color color, required VoidCallback onPressed}) {
@@ -246,7 +359,14 @@ class DashboardScreen extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => screen),
-        );
+        ).then((_) {
+             // Refresh stats if coming back from pending approvals (approvals might have happened)
+             if (widget.user['role'] == 'ADMIN' && title == 'Pending Approvals') {
+                setState(() {
+                  _loadStats();
+                });
+             }
+        });
       },
       hoverColor: Colors.white.withOpacity(0.1),
     );
@@ -256,3 +376,4 @@ class DashboardScreen extends StatelessWidget {
 extension ColorExtension on Colors {
     static const Color emerald = Color(0xFF2ECC71);
 }
+

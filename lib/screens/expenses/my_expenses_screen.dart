@@ -23,7 +23,12 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
 
   Future<void> _loadExpenses() async {
     setState(() => _isLoading = true);
-    final expenses = await _tursoService.getUserExpenses(widget.user['id']);
+    
+    // Filter by current month
+    final now = DateTime.now();
+    final monthPrefix = now.toIso8601String().substring(0, 7); // YYYY-MM
+
+    final expenses = await _tursoService.getUserExpenses(widget.user['id'], monthPrefix: monthPrefix);
     setState(() {
       _expenses = expenses;
       _isLoading = false;
@@ -35,6 +40,45 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
       case 'approved': return Colors.green;
       case 'rejected': return Colors.red;
       default: return Colors.orange;
+    }
+  }
+
+  Future<void> _deleteExpense(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this expense?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await _tursoService.deleteExpense(id);
+      if (success) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Expense deleted successfully'), backgroundColor: Colors.green),
+           );
+           _loadExpenses();
+        }
+      } else {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Failed to delete expense'), backgroundColor: Colors.red),
+           );
+        }
+      }
     }
   }
 
@@ -79,6 +123,19 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('${expense['date']}', style: const TextStyle(color: Colors.white70)),
+                            if (expense['approverName'] != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                expense['status'] == 'Rejected' 
+                                  ? 'Rejected by: ${expense['approverName']}'
+                                  : 'Approved by: ${expense['approverName']}',
+                                style: TextStyle(
+                                  color: expense['status'] == 'Rejected' ? Colors.redAccent : Colors.greenAccent, 
+                                  fontSize: 13, 
+                                  fontStyle: FontStyle.italic
+                                ),
+                              ),
+                            ],
                             if (expense['status'] == 'Rejected' && expense['remark'] != null) ...[
                               const SizedBox(height: 4),
                               Text(
@@ -88,22 +145,35 @@ class _MyExpensesScreenState extends State<MyExpensesScreen> {
                             ],
                           ],
                         ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              '₹${expense['amount']}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '₹${expense['amount']}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                                ),
+                                Text(
+                                  expense['status'],
+                                  style: TextStyle(
+                                    color: _getStatusColor(expense['status']),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              expense['status'],
-                              style: TextStyle(
-                                color: _getStatusColor(expense['status']),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold
-                              ),
-                            ),
+                            if (expense['status'] != 'Approved') ...[
+                               const SizedBox(width: 8),
+                               IconButton(
+                                 icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                 onPressed: () => _deleteExpense(expense['id']),
+                                 tooltip: 'Delete Expense',
+                               ),
+                            ]
                           ],
                         ),
                       ),

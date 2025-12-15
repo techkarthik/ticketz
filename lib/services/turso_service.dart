@@ -512,16 +512,23 @@ class TursoService {
 
   // --- EXPENSES (USER Submission) ---
 
-  Future<List<Map<String, dynamic>>> getUserExpenses(int userId) async {
+  Future<List<Map<String, dynamic>>> getUserExpenses(int userId, {String? monthPrefix}) async {
     try {
-      // Joining with USERS table to get approver name if needed
-      final res = await _execute(
-         "SELECT E.ID, E.USERID, E.EXPENSE_TYPE_ID, E.AMOUNT, E.EXPENSE_DATE, E.DESCRIPTION, E.STATUS, U.USERNAME, E.REJECTION_REMARK "
-         "FROM EXPENSES E "
-         "LEFT JOIN USERS U ON E.APPROVED_BY = U.USERID "
-         "WHERE E.USERID = ? ORDER BY E.ID DESC", 
-         [{"type": "integer", "value": userId.toString()}]
-      );
+      String sql = "SELECT E.ID, E.USERID, E.EXPENSE_TYPE_ID, E.AMOUNT, E.EXPENSE_DATE, E.DESCRIPTION, E.STATUS, U.USERNAME, E.REJECTION_REMARK "
+                   "FROM EXPENSES E "
+                   "LEFT JOIN USERS U ON E.APPROVED_BY = U.USERID "
+                   "WHERE E.USERID = ?";
+      
+      List<Map<String, String>> args = [{"type": "integer", "value": userId.toString()}];
+
+      if (monthPrefix != null) {
+        sql += " AND E.EXPENSE_DATE LIKE ?";
+        args.add({"type": "text", "value": "$monthPrefix%"});
+      }
+
+      sql += " ORDER BY E.ID DESC";
+
+      final res = await _execute(sql, args);
       if (res['type'] == 'ok') {
         final rows = res['response']['result']['rows'];
         if (rows != null) {
@@ -563,6 +570,20 @@ class TursoService {
     }
   }
 
+  Future<bool> deleteExpense(int id) async {
+    try {
+      // Only delete if NOT Approved. Extra safety check.
+      final res = await _execute(
+        "DELETE FROM EXPENSES WHERE ID = ? AND STATUS != 'Approved'",
+        [{"type": "integer", "value": id.toString()}]
+      );
+      return res['type'] == 'ok';
+    } catch (e) {
+      print('Error deleting expense: $e');
+      return false;
+    }
+  }
+
   Future<int> checkExpenseLimit(int deptId, String month) async {
      try {
       final res = await _execute("SELECT LIMIT_AMOUNT FROM EXPENSE_LIMITS WHERE DEPARTMENTID = ? AND MONTHNAME = ?", [
@@ -586,6 +607,42 @@ class TursoService {
     // Assuming monthStr is something we can match or we fetch all and filter in app (not scalable but ok for now).
     // Let's rely on fetching all expenses for user and filtering in Dart for now to save complex SQL for this prototype.
     return 0; 
+  }
+
+  // --- STATS ---
+
+  Future<List<Map<String, dynamic>>> getDepartmentStats(String monthPrefix, String monthName) async {
+    try {
+      // monthPrefix e.g., '2023-10'
+      // monthName e.g., 'October'
+      final res = await _execute(
+        "SELECT D.DEPARTMENT_NAME, SUM(E.AMOUNT), L.LIMIT_AMOUNT "
+        "FROM EXPENSES E "
+        "JOIN USERS U ON E.USERID = U.USERID "
+        "JOIN DEPARTMENTS D ON U.DEPARTMENTID = D.DEPTID "
+        "LEFT JOIN EXPENSE_LIMITS L ON D.DEPTID = L.DEPARTMENTID AND L.MONTHNAME = ? "
+        "WHERE E.STATUS = 'Approved' AND E.EXPENSE_DATE LIKE ? "
+        "GROUP BY D.DEPARTMENT_NAME",
+        [
+          {"type": "text", "value": monthName},
+          {"type": "text", "value": "$monthPrefix%"}
+        ]
+      );
+
+      if (res['type'] == 'ok') {
+        final rows = res['response']['result']['rows'];
+        if (rows != null) {
+          return rows.map<Map<String, dynamic>>((r) => {
+            'deptName': r[0]['value'],
+            'total': double.parse(r[1]['value'].toString()),
+            'limit': r[2]['value'] != null ? int.parse(r[2]['value'].toString()) : null,
+          }).toList();
+        }
+      }
+    } catch (e) {
+      print('Error fetching department stats: $e');
+    }
+    return [];
   }
 
   // Helper for executing SQL
