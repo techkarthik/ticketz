@@ -3,7 +3,8 @@ import '../../services/turso_service.dart';
 import '../../widgets/gradient_background.dart';
 
 class ExpenseLimitsScreen extends StatefulWidget {
-  const ExpenseLimitsScreen({super.key});
+  final int organizationId;
+  const ExpenseLimitsScreen({super.key, required this.organizationId});
 
   @override
   State<ExpenseLimitsScreen> createState() => _ExpenseLimitsScreenState();
@@ -24,8 +25,8 @@ class _ExpenseLimitsScreenState extends State<ExpenseLimitsScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final limits = await _tursoService.getExpenseLimits();
-    final departments = await _tursoService.getDepartments();
+    final limits = await _tursoService.getExpenseLimits(widget.organizationId);
+    final departments = await _tursoService.getDepartments(widget.organizationId);
     final months = await _tursoService.getMonths();
     
     setState(() {
@@ -107,18 +108,14 @@ class _ExpenseLimitsScreenState extends State<ExpenseLimitsScreen> {
                     error = await _tursoService.updateExpenseLimit(
                         limit['id'], selectedDeptId!, selectedMonth!, amount);
                   } else {
-                    error = await _tursoService.createExpenseLimit(selectedDeptId!, selectedMonth!, amount);
+                    error = await _tursoService.createExpenseLimit(widget.organizationId, selectedDeptId!, selectedMonth!, amount);
                   }
 
                   if (error == null) {
                       if (mounted) _loadData();
                       navigator.pop();
                   } else {
-                    navigator.pop(); // Close dialog first or show error on top? Better to show on top or keep dialog.
-                    // Let's keep dialog open and show error? Or use ScaffoldMessenger.
-                    // For simplicity, let's close and show SnackBar.
-                    // Re-opening navigator reference might be tricky if popped.
-                    // Actually, if we pop, we lose context for SnackBar helper if not careful.
+                    navigator.pop();
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(error),
                       backgroundColor: Colors.red,

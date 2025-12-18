@@ -1,0 +1,38 @@
+Karthik.jct turso
+libsql://xpense-perzonal-xpenze.aws-ap-south-1.turso.io
+
+SendGrid, Mailgun, or EmailJS that provides an HTTP (REST) API.
+
+libsql://xpense-perzonal-xpenze.aws-ap-south-1.turso.io
+
+eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NjU5NTAyOTcsImlkIjoiNjBjMDIzZDItNTQ1YS00N2QzLWFjNmUtZGFhYWJiM2UwNDA4IiwicmlkIjoiZmQwNzExYzMtYmY4Ni00NGYxLWIwMDktNGMxZDMwYjI2OTQ5In0.Hsq8t_PmWZ0VL67_nRruD-zPttsLxVublA54Onry9WoTGHtDAt0x--u2FNLwfv_wygxgy5kSgcWMEo6q81L4CQ
+
+
+803205 organi
+628719
+
+email config setting 
+
+smtp.gmail.com
+port 587
+username techkarthikmahalingam@gmail.com
+apppassword cfcn akat gfra smdx
+
+turso databas connection has changed, so create all the tables and data, 
+and i need a user register option in screen , verify the email id by sending code,
+who is registering like that are always admin, the user id should created by 6 digit unique integer id which should be stored in users table what ever entry they created in other tables abd transaction, they should be ableto see the data  related with that 6 digit unique id,
+
+admin should create new user no need email verification, but the 6 digit unique id should  be common to the all users they creates.
+so when users loging in they should login with the 5 digit id and username and password,by default they dont to signin again unless they signout,keep me login method is must, but keep the keep me login invisible.
+
+
+all the email verification going to techkarthikmahalingam@gmail.com only, but its should goto the person email id who registering in screen,
+organization id should be shown in user profiles profiles
+after registering organization , the organization id is showing in screen , and its good, and additionally store the irganization id in cookies or somewhere and when they open homescreen for login the organization id may come automatically 
+
+
+
+
+
+build/app/outputs/flutter-apk/app-release.apk
+android/app/upload-keystore.jks

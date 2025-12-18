@@ -3,7 +3,8 @@ import '../../services/turso_service.dart';
 import '../../widgets/gradient_background.dart';
 
 class UsersScreen extends StatefulWidget {
-  const UsersScreen({super.key});
+  final int organizationId;
+  const UsersScreen({super.key, required this.organizationId});
 
   @override
   State<UsersScreen> createState() => _UsersScreenState();
@@ -23,8 +24,8 @@ class _UsersScreenState extends State<UsersScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final users = await _tursoService.getUsers();
-    final departments = await _tursoService.getDepartments();
+    final users = await _tursoService.getUsers(widget.organizationId);
+    final departments = await _tursoService.getDepartments(widget.organizationId);
     setState(() {
       _users = users;
       _departments = departments;
@@ -40,8 +41,11 @@ class _UsersScreenState extends State<UsersScreen> {
     final passwordController = TextEditingController();
     
     // Default to first department if adding, or existing deptId if editing
+    // Default to first department if adding, or existing deptId if editing
     int? selectedDeptId = user?['deptId'];
-    if (selectedDeptId == null && _departments.isNotEmpty) {
+    if (selectedDeptId == 0) selectedDeptId = null; // Handle unassigned
+
+    if (selectedDeptId == null && _departments.isNotEmpty && !isEditing) {
       selectedDeptId = _departments.first['id'];
     }
 
@@ -163,6 +167,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     );
                   } else {
                     success = await _tursoService.createUser(
+                      widget.organizationId,
                       username,
                       password,
                       email,
@@ -263,7 +268,10 @@ class _UsersScreenState extends State<UsersScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.white.withOpacity(0.2),
-                      child: Text(user['username'][0].toUpperCase(), style: const TextStyle(color: Colors.white)),
+                      child: Text(
+                        (user['username'] as String).isNotEmpty ? user['username'][0].toUpperCase() : '?',
+                        style: const TextStyle(color: Colors.white)
+                      ),
                     ),
                     title: Text('${user['username']} (${user['role']})', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     subtitle: Text('${user['email']} • ${user['deptName']}', style: const TextStyle(color: Colors.white70)),

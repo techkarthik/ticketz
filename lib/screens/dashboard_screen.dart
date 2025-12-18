@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
 import 'admin/expense_types_screen.dart';
@@ -43,7 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ];
       final monthName = monthNames[now.month - 1];
 
-      _statsFuture = _tursoService.getDepartmentStats(monthPrefix, monthName);
+      _statsFuture = _tursoService.getDepartmentStats(widget.user['organizationId'], monthPrefix, monthName);
     } else {
       _statsFuture = Future.value([]);
     }
@@ -94,7 +95,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               UserAccountsDrawerHeader(
                 accountName: Text('${widget.user['username']} (${widget.user['role'] ?? 'USER'})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                accountEmail: Text(widget.user['email'], style: const TextStyle(color: Colors.white70)),
+                accountEmail: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.user['email'], style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 4),
+                    Text('Org ID: ${widget.user['organizationId']}', style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+                  ],
+                ),
                 currentAccountPicture: CircleAvatar(
                   backgroundColor: Colors.white.withOpacity(0.2),
                   child: Text(
@@ -109,11 +117,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               if (widget.user['role'] == 'ADMIN') ...[
                 _buildDrawerItem(context, Icons.done_all, 'Pending Approvals', PendingExpensesScreen(currentUser: widget.user)),
-                _buildDrawerItem(context, Icons.people, 'Manage Users', const UsersScreen()),
-                _buildDrawerItem(context, Icons.business, 'Manage Departments', const DepartmentsScreen()),
-                _buildDrawerItem(context, Icons.category, 'Expense Types', const ExpenseTypesScreen()),
-                _buildDrawerItem(context, Icons.calendar_today, 'Months', const MonthsScreen()),
-                _buildDrawerItem(context, Icons.currency_rupee, 'Expense Limits', const ExpenseLimitsScreen()),
+                _buildDrawerItem(context, Icons.business, 'Manage Departments', DepartmentsScreen(organizationId: widget.user['organizationId'])),
+                _buildDrawerItem(context, Icons.category, 'Expense Types', ExpenseTypesScreen(organizationId: widget.user['organizationId'])),
+                _buildDrawerItem(context, Icons.calendar_today, 'Months', MonthsScreen(organizationId: widget.user['organizationId'])),
+                _buildDrawerItem(context, Icons.currency_rupee, 'Expense Limits', ExpenseLimitsScreen(organizationId: widget.user['organizationId'])),
+                _buildDrawerItem(context, Icons.people, 'Manage Users', UsersScreen(organizationId: widget.user['organizationId'])),
               ]
             ],
           ),
@@ -376,4 +384,3 @@ class _DashboardScreenState extends State<DashboardScreen> {
 extension ColorExtension on Colors {
     static const Color emerald = Color(0xFF2ECC71);
 }
-

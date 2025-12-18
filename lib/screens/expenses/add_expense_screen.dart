@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../../services/turso_service.dart';
 import '../../widgets/gradient_background.dart';
@@ -34,7 +35,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Future<void> _loadData() async {
-    final types = await _tursoService.getExpenseTypes();
+    final types = await _tursoService.getExpenseTypes(widget.user['organizationId']);
     setState(() {
       _expenseTypes = types;
     });
@@ -55,28 +56,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final monthName = _monthNames[_selectedDate.month - 1]; // 0-indexed array, 1-indexed month
     
     // 1. Check Limit
-    // In a real app we would sum current month expenses + new amount.
-    // For now, let's just check if this single expense exceeds the limit (simplified per plan)
-    // Or we can fetch all expenses and sum them up in Dart.
-    
-    final limit = await _tursoService.checkExpenseLimit(widget.user['deptId'], monthName);
-    int currentSpending = 0;
-    
-    // Fetch current spending
-    final expenses = await _tursoService.getUserExpenses(widget.user['id']);
-    for (var e in expenses) {
-       // Check if expense is in current month/year
-       // Date format in DB is just string, likely ISO or whatever we send.
-       // We'll store as YYYY-MM-DD.
-       try {
-         final date = DateTime.parse(e['date']);
-         if (date.month == _selectedDate.month && date.year == _selectedDate.year) {
-           currentSpending += (e['amount'] as int);
-         }
-       } catch (e) {
-         // ignore parse error
-       }
-    }
+    final limit = await _tursoService.checkExpenseLimit(widget.user['organizationId'], widget.user['deptId'], monthName);
+    // Fetch current department spending
+    String monthPrefix = "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}";
+    final currentSpending = await _tursoService.getDepartmentCurrentSpending(
+       widget.user['organizationId'], 
+       widget.user['deptId'], 
+       monthPrefix
+    );
 
     if (limit != -1 && (currentSpending + amount) > limit) {
       if (!mounted) return;
@@ -99,6 +86,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
     // 2. Submit
     final success = await _tursoService.createExpense(
+      widget.user['organizationId'], // Pass organizationId
       widget.user['id'],
       int.parse(_selectedTypeId!),
       amount,

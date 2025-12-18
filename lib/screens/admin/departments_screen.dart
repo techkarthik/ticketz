@@ -3,7 +3,8 @@ import '../../services/turso_service.dart';
 import '../../widgets/gradient_background.dart';
 
 class DepartmentsScreen extends StatefulWidget {
-  const DepartmentsScreen({super.key});
+  final int organizationId;
+  const DepartmentsScreen({super.key, required this.organizationId});
 
   @override
   State<DepartmentsScreen> createState() => _DepartmentsScreenState();
@@ -22,7 +23,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
 
   Future<void> _loadDepartments() async {
     setState(() => _isLoading = true);
-    final departments = await _tursoService.getDepartments();
+    final departments = await _tursoService.getDepartments(widget.organizationId);
     setState(() {
       _departments = departments;
       _isLoading = false;
@@ -75,7 +76,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                   success = await _tursoService.updateDepartment(
                       dept['id'], name, active);
                 } else {
-                  success = await _tursoService.createDepartment(name, active);
+                  success = await _tursoService.createDepartment(widget.organizationId, name, active);
                 }
 
                 if (success) {

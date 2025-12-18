@@ -25,7 +25,7 @@ class _PendingExpensesScreenState extends State<PendingExpensesScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final expenses = await _tursoService.getPendingExpenses();
+    final expenses = await _tursoService.getPendingExpenses(widget.currentUser['organizationId']);
     setState(() {
       _pendingExpenses = expenses;
       _isLoading = false;

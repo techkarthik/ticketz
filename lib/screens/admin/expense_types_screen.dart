@@ -3,7 +3,8 @@ import '../../services/turso_service.dart';
 import '../../widgets/gradient_background.dart';
 
 class ExpenseTypesScreen extends StatefulWidget {
-  const ExpenseTypesScreen({super.key});
+  final int organizationId;
+  const ExpenseTypesScreen({super.key, required this.organizationId});
 
   @override
   State<ExpenseTypesScreen> createState() => _ExpenseTypesScreenState();
@@ -22,7 +23,7 @@ class _ExpenseTypesScreenState extends State<ExpenseTypesScreen> {
 
   Future<void> _loadExpenseTypes() async {
     setState(() => _isLoading = true);
-    final types = await _tursoService.getExpenseTypes();
+    final types = await _tursoService.getExpenseTypes(widget.organizationId);
     setState(() {
       _expenseTypes = types;
       _isLoading = false;
@@ -57,7 +58,7 @@ class _ExpenseTypesScreenState extends State<ExpenseTypesScreen> {
               if (isEditing) {
                 success = await _tursoService.updateExpenseType(type['id'], typeName);
               } else {
-                success = await _tursoService.createExpenseType(typeName);
+                success = await _tursoService.createExpenseType(widget.organizationId, typeName);
               }
 
               if (success) {
